@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Baby Hawk · Crypto Queen</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 88C50 88 10 60 10 35C10 20 22 10 35 10C42 10 48 14 50 20C52 14 58 10 65 10C78 10 90 20 90 35C90 60 50 88 50 88Z' fill='%23e74c3c'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+    <!-- ===== LOGIN SCREEN ===== -->
+    <div class="lounge-screen" id="loginScreen">
+        <div class="lounge-bg">
+            <div class="matrix-overlay"></div>
+        </div>
+        <div class="lounge-overlay"></div>
+
+        <div class="lounge-card">
+            <div class="lounge-header">
+                <h1>Baby Hawk</h1>
+                <p class="lounge-sub">⚡ Crypto Queen ⚡</p>
+            </div>
+
+            <div class="lounge-divider"></div>
+
+            <div class="login-form">
+                <div class="form-group">
+                    <input type="text" id="loginUserId" placeholder="Username" autofocus />
+                </div>
+                <div class="form-group">
+                    <input type="password" id="loginPassword" placeholder="Password" />
+                </div>
+                <button class="login-btn" onclick="loginUser()">Enter Temple</button>
+                <p class="login-error" id="loginError" style="display:none;">❌ Invalid username or password</p>
+            </div>
+
+            <p class="lounge-footer">✦ ask Baby Hawk for an account ✦</p>
+        </div>
+    </div>
+
+    <!-- ===== MAIN APP ===== -->
+    <div class="app" id="app" style="display:none;">
+        <aside class="left-panel">
+            <div class="baby-card">
+                <img src="images/babyhawk.png" alt="Baby Hawk" class="baby-full" />
+                <div class="poem-box">
+                    <p class="poem-line">"i trade in stars,</p>
+                    <p class="poem-line">not in fear —</p>
+                    <p class="poem-line">the market is a dance,</p>
+                    <p class="poem-line">and i know every step."</p>
+                    <p class="poem-sign">~ baby hawk</p>
+                </div>
+                <div class="mode-selector">
+                    <button class="mode-btn active" onclick="setMode('chat')">💬 Chat</button>
+                    <button class="mode-btn" onclick="setMode('crypto')">📊 Crypto</button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="right-panel">
+            <header class="chat-header">
+                <div class="header-left">
+                    <h2>Baby Hawk · <span id="userBadge">Guest</span></h2>
+                    <span class="sub-status" id="modeStatus">💬 Chat Mode</span>
+                </div>
+                <div class="header-right">
+                    <button class="logout-btn" onclick="logoutUser()">↺ Logout</button>
+                </div>
+            </header>
+
+            <!-- Asset Selector (Crypto Mode) -->
+            <div class="asset-selector" id="assetSelector" style="display:none;">
+                <select id="assetSelect">
+                    <option value="BTC-USD">BTC/USD</option>
+                    <option value="ETH-USD">ETH/USD</option>
+                    <option value="SOL-USD">SOL/USD</option>
+                    <option value="XRP-USD">XRP/USD</option>
+                    <option value="ADA-USD">ADA/USD</option>
+                    <option value="DOGE-USD">DOGE/USD</option>
+                </select>
+                <select id="timeframeSelect">
+                    <option value="1d">1 Day</option>
+                    <option value="5d">5 Days</option>
+                    <option value="1mo">1 Month</option>
+                    <option value="3mo">3 Months</option>
+                    <option value="6mo">6 Months</option>
+                    <option value="1y">1 Year</option>
+                </select>
+                <button class="analyze-btn" onclick="analyzeCrypto()">📊 Analyze</button>
+            </div>
+
+            <div class="messages" id="messages"></div>
+
+            <div class="input-bar">
+                <input type="text" id="msgInput" placeholder="Message Baby Hawk…" autofocus />
+                <button class="input-btn send-btn" id="sendBtn">➤</button>
+            </div>
+
+            <div class="file-preview" id="filePreview"></div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
