@@ -220,7 +220,7 @@ function calculateVolatility(prices) {
 }
 
 // ============================================================
-//  BABY HAWK CRYPTO QUEEN PROMPT
+//  BABY HAWK CRYPTO QUEEN PROMPT (UPDATED FOR GEMINI 3.5)
 // ============================================================
 function getBabyHawkPrompt(userName, userRole, marketData = null) {
   let marketContext = '';
@@ -487,12 +487,12 @@ app.get('/api/market/:asset', async (req, res) => {
 });
 
 // ============================================================
-//  BABY HAWK CRYPTO QUEEN CHAT (UPDATED MODEL)
+//  BABY HAWK CRYPTO QUEEN CHAT (GEMINI 3.5 FLASH)
 // ============================================================
 app.post('/api/chat', async (req, res) => {
   try {
     await connectDB();
-    const { userId, message, model = 'gemini-2.5-flash-lite', asset = 'BTC-USD' } = req.body;
+    const { userId, message, model = process.env.GEMINI_MODEL || 'gemini-3.5-flash', asset = 'BTC-USD' } = req.body;
     
     if (!userId || !message) {
       return res.status(400).json({ error: 'userId and message required' });
@@ -545,7 +545,7 @@ User message: ${message}${memText}`;
     }
 
     // ============================================================
-    //  GEMINI 2.5 FLASH LITE - MODELO ATUALIZADO
+    //  GEMINI 3.5 FLASH - LATEST MODEL
     // ============================================================
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -558,7 +558,7 @@ User message: ${message}${memText}`;
           }],
           generationConfig: {
             temperature: 0.85,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 4096,
             topP: 0.95,
             topK: 40
           }

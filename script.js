@@ -233,16 +233,16 @@ async function sendMessage() {
     showTyping();
 
     try {
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: currentUser,
-                message: message,
-                model: 'gemini-2.5-flash-lite',
-                asset: 'BTC-USD'
-            })
-        });
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        userId: currentUser,
+        message: message,
+        model: 'gemini-3.5-flash',
+        asset: 'BTC-USD'
+    })
+});
 
         const data = await res.json();
         hideTyping();
