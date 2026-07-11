@@ -142,8 +142,6 @@ async function getMarketData(asset = 'BTC-USD', period = '1mo') {
     }
     
     const result = data.chart.result[0];
-    const meta = result.meta;
-    const timestamps = result.timestamp;
     const quotes = result.indicators.quote[0];
     
     const prices = quotes.close || [];
@@ -488,11 +486,13 @@ app.get('/api/market/:asset', async (req, res) => {
   }
 });
 
-// ===== BABY HAWK CRYPTO QUEEN CHAT =====
+// ============================================================
+//  BABY HAWK CRYPTO QUEEN CHAT (UPDATED MODEL)
+// ============================================================
 app.post('/api/chat', async (req, res) => {
   try {
     await connectDB();
-    const { userId, message, model = 'gemini-2.5-flash', asset = 'BTC-USD' } = req.body;
+    const { userId, message, model = 'gemini-2.5-flash-lite', asset = 'BTC-USD' } = req.body;
     
     if (!userId || !message) {
       return res.status(400).json({ error: 'userId and message required' });
@@ -505,16 +505,17 @@ app.post('/api/chat', async (req, res) => {
     
     const memory = await Memory.getOrCreate(userId);
     
-// const lastMessages = memory.messages.slice(-2);
-// for (const lastMsg of lastMessages) {
-//   if (lastMsg.sender === 'user' && lastMsg.text === message) {
-//     console.log('⚠️ Duplicate message detected, ignoring...');
-//     return res.json({ 
-//       success: true, 
-//       reply: "You already said that, my love! 💖" 
-//     });
-//   }
-// }
+    const lastMessages = memory.messages.slice(-2);
+    for (const lastMsg of lastMessages) {
+      if (lastMsg.sender === 'user' && lastMsg.text === message) {
+        console.log('⚠️ Duplicate message detected, ignoring...');
+        return res.json({ 
+          success: true, 
+          reply: "You already said that, my love! 💖" 
+        });
+      }
+    }
+    
     const history = memory.getHistory(15);
     
     let memText = '';
@@ -527,7 +528,6 @@ app.post('/api/chat', async (req, res) => {
       context = history.map(m => `${m.sender}: ${m.text}`).join('\n');
     }
     
-    // Get market data automatically
     const marketData = await getMarketData(asset, '1mo');
     
     const systemPrompt = getBabyHawkPrompt(user.name, user.role, marketData);
@@ -544,6 +544,9 @@ User message: ${message}${memText}`;
       throw new Error('GOOGLE_API_KEY not found');
     }
 
+    // ============================================================
+    //  GEMINI 2.5 FLASH LITE - MODELO ATUALIZADO
+    // ============================================================
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
@@ -575,7 +578,6 @@ User message: ${message}${memText}`;
     await memory.addMessage('user', message);
     await memory.addMessage('bot', reply);
     
-    // Store trade recommendation if detected
     if (reply.toLowerCase().includes('buy') || reply.toLowerCase().includes('sell')) {
       const assetMatch = reply.match(/(BTC|ETH|SOL|XRP|ADA|DOGE)[-\s]*(USD|USDT|USDC)?/i);
       const confMatch = reply.match(/confidence:?\s*(\d+)/i);

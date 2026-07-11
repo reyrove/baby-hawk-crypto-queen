@@ -57,7 +57,6 @@ async function loadMemoryFromServer(userId) {
         if (res.ok) {
             const data = await res.json();
             
-            // Remove duplicates when loading
             if (data && data.messages) {
                 const unique = [];
                 const seen = new Set();
@@ -70,7 +69,6 @@ async function loadMemoryFromServer(userId) {
                 }
                 if (unique.length < data.messages.length) {
                     data.messages = unique;
-                    // Clean on server
                     await fetch(`${SERVER_URL}/api/memory/${userId}/clean`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -166,7 +164,7 @@ async function enterApp(displayName) {
     msgDiv.innerHTML = '';
     
     const userData = USERS[currentUser];
-    const welcomeMsg = userData?.welcome || `Welcome, ${displayName}! 🌸 I'm Baby Hawk. Tell me something beautiful...`;
+    const welcomeMsg = userData?.welcome || `Welcome, ${displayName}! 🌸 I'm Baby Hawk - Crypto Queen. Ready to trade and love. 💎`;
     addMessage(welcomeMsg, 'bot');
 }
 
@@ -191,13 +189,11 @@ function logoutUser() {
 //  SEND MESSAGE - COMPLETELY FIXED
 // ============================================================
 async function sendMessage() {
-    // ===== PREVENT MULTIPLE SENDS =====
     if (isProcessing) {
         console.log('⏳ Already sending, please wait...');
         return;
     }
     
-    // ===== PREVENT RAPID SENDS =====
     const now = Date.now();
     if (now - lastSendTime < 2000) {
         console.log('⏳ Please wait 2 seconds between messages');
@@ -208,7 +204,6 @@ async function sendMessage() {
     const sendBtn = document.querySelector('.send-btn');
     let message = input.value.trim();
     
-    // ===== PREVENT DUPLICATE MESSAGE =====
     if (message === lastSentMessage) {
         console.log('⚠️ Duplicate message detected, not sending');
         input.value = '';
@@ -221,12 +216,10 @@ async function sendMessage() {
         return;
     }
 
-    // Lock and save
     isProcessing = true;
     lastSentMessage = message;
     lastSendTime = now;
     
-    // Disable button
     if (sendBtn) {
         sendBtn.disabled = true;
         sendBtn.style.opacity = '0.5';
@@ -235,7 +228,6 @@ async function sendMessage() {
 
     input.value = '';
 
-    // Save user message
     await saveMessageToServer(currentUser, 'user', message);
     addMessage(message, 'user');
     showTyping();
@@ -247,7 +239,8 @@ async function sendMessage() {
             body: JSON.stringify({
                 userId: currentUser,
                 message: message,
-                model: 'gemini-2.5-flash'
+                model: 'gemini-2.5-flash-lite',
+                asset: 'BTC-USD'
             })
         });
 
@@ -267,7 +260,6 @@ async function sendMessage() {
         addMessage(`❌ Error: ${e.message}`, 'bot');
     }
 
-    // Unlock
     isProcessing = false;
     if (sendBtn) {
         sendBtn.disabled = false;
@@ -283,7 +275,6 @@ function addMessage(text, sender) {
     const container = document.getElementById('messages');
     if (!container) return;
     
-    // ===== CHECK FOR DUPLICATE IN UI =====
     const allMessages = container.querySelectorAll('.msg .bubble p');
     for (const msg of allMessages) {
         if (msg.textContent === text) {
