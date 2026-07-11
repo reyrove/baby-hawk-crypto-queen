@@ -505,17 +505,16 @@ app.post('/api/chat', async (req, res) => {
     
     const memory = await Memory.getOrCreate(userId);
     
-    const lastMessages = memory.messages.slice(-2);
-    for (const lastMsg of lastMessages) {
-      if (lastMsg.sender === 'user' && lastMsg.text === message) {
-        console.log('⚠️ Duplicate message detected, ignoring...');
-        return res.json({ 
-          success: true, 
-          reply: "You already said that, my love! 💖" 
-        });
-      }
-    }
-    
+// const lastMessages = memory.messages.slice(-2);
+// for (const lastMsg of lastMessages) {
+//   if (lastMsg.sender === 'user' && lastMsg.text === message) {
+//     console.log('⚠️ Duplicate message detected, ignoring...');
+//     return res.json({ 
+//       success: true, 
+//       reply: "You already said that, my love! 💖" 
+//     });
+//   }
+// }
     const history = memory.getHistory(15);
     
     let memText = '';
