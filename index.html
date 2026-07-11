@@ -51,10 +51,6 @@
                     <p class="poem-line">and i know every step."</p>
                     <p class="poem-sign">~ baby hawk</p>
                 </div>
-                <div class="mode-selector">
-                    <button class="mode-btn active" onclick="setMode('chat')">💬 Chat</button>
-                    <button class="mode-btn" onclick="setMode('crypto')">📊 Crypto</button>
-                </div>
             </div>
         </aside>
 
@@ -62,33 +58,11 @@
             <header class="chat-header">
                 <div class="header-left">
                     <h2>Baby Hawk · <span id="userBadge">Guest</span></h2>
-                    <span class="sub-status" id="modeStatus">💬 Chat Mode</span>
                 </div>
                 <div class="header-right">
                     <button class="logout-btn" onclick="logoutUser()">↺ Logout</button>
                 </div>
             </header>
-
-            <!-- Asset Selector (Crypto Mode) -->
-            <div class="asset-selector" id="assetSelector" style="display:none;">
-                <select id="assetSelect">
-                    <option value="BTC-USD">BTC/USD</option>
-                    <option value="ETH-USD">ETH/USD</option>
-                    <option value="SOL-USD">SOL/USD</option>
-                    <option value="XRP-USD">XRP/USD</option>
-                    <option value="ADA-USD">ADA/USD</option>
-                    <option value="DOGE-USD">DOGE/USD</option>
-                </select>
-                <select id="timeframeSelect">
-                    <option value="1d">1 Day</option>
-                    <option value="5d">5 Days</option>
-                    <option value="1mo">1 Month</option>
-                    <option value="3mo">3 Months</option>
-                    <option value="6mo">6 Months</option>
-                    <option value="1y">1 Year</option>
-                </select>
-                <button class="analyze-btn" onclick="analyzeCrypto()">📊 Analyze</button>
-            </div>
 
             <div class="messages" id="messages"></div>
 

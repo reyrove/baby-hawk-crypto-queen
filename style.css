@@ -124,21 +124,6 @@ body {
 .poem-line { font-family: 'EB Garamond', serif; font-size: 16px; line-height: 2; color: #a4b892; font-style: italic; }
 .poem-sign { font-size: 11px; color: #6a7a5a; margin-top: 2px; letter-spacing: 2px; font-style: italic; }
 
-.mode-selector { margin-top: 14px; display: flex; gap: 8px; justify-content: center; }
-.mode-btn {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.06);
-    color: #8aaa7a;
-    padding: 6px 20px;
-    border-radius: 30px;
-    cursor: pointer;
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    transition: all 0.3s;
-}
-.mode-btn.active { background: rgba(74,107,58,0.15); border-color: #4a6b3a; color: #e8f0d8; }
-.mode-btn:hover { background: rgba(74,107,58,0.08); }
-
 .right-panel {
     flex: 1;
     display: flex;
@@ -157,7 +142,6 @@ body {
 }
 .header-left h2 { font-size: 16px; font-weight: 400; color: #c5d0b5; }
 .header-left h2 span { color: #8aaa7a; }
-.sub-status { font-size: 11px; color: #6a7a5a; font-style: italic; display: block; margin-top: 2px; }
 .logout-btn {
     background: transparent;
     border: 1px solid rgba(74,107,58,0.2);
@@ -171,42 +155,6 @@ body {
 }
 .logout-btn:hover { background: rgba(74,107,58,0.1); border-color: #6a8a5a; color: #c5d0b5; }
 
-/* ===== ASSET SELECTOR ===== */
-.asset-selector {
-    padding: 10px 20px;
-    background: rgba(12,14,10,0.6);
-    border-bottom: 1px solid rgba(255,255,255,0.03);
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-}
-.asset-selector select {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 20px;
-    color: #c5d0b5;
-    padding: 6px 14px;
-    font-size: 13px;
-    font-family: 'Inter', sans-serif;
-    outline: none;
-}
-.asset-selector select:focus { border-color: #4a6b3a; }
-.analyze-btn {
-    background: linear-gradient(135deg, #3a5a2a, #2a4a1a);
-    border: none;
-    color: #e8f0d8;
-    padding: 6px 18px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 13px;
-    font-family: 'Inter', sans-serif;
-    transition: all 0.3s;
-}
-.analyze-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(74,107,58,0.15); }
-
-/* ===== MESSAGES ===== */
 .messages {
     flex: 1;
     padding: 16px 20px;

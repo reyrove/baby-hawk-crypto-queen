@@ -4,7 +4,6 @@
 const API_URL = '/api/chat';
 const MEMORY_URL = '/api/memory';
 const USERS_URL = '/api/users';
-const MARKET_URL = '/api/market';
 const SERVER_URL = window.location.origin;
 
 // ============================================================
@@ -38,7 +37,6 @@ let uploadedFiles = [];
 let isProcessing = false;
 let lastSentMessage = '';
 let lastSendTime = 0;
-let currentMode = 'chat';
 
 // ============================================================
 //  LOCAL STORAGE
@@ -94,45 +92,6 @@ async function saveMessageToServer(userId, sender, text) {
             body: JSON.stringify({ sender, text })
         });
     } catch (e) { console.log('Save to server failed'); }
-}
-
-// ============================================================
-//  MODE SELECTOR
-// ============================================================
-function setMode(mode) {
-    currentMode = mode;
-    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-    
-    if (mode === 'chat') {
-        document.querySelector('.mode-btn:first-child').classList.add('active');
-        document.getElementById('assetSelector').style.display = 'none';
-        document.getElementById('modeStatus').textContent = '💬 Chat Mode';
-        document.getElementById('msgInput').placeholder = 'Message Baby Hawk…';
-    } else {
-        document.querySelector('.mode-btn:last-child').classList.add('active');
-        document.getElementById('assetSelector').style.display = 'flex';
-        document.getElementById('modeStatus').textContent = '📊 Crypto Mode';
-        document.getElementById('msgInput').placeholder = 'Ask about crypto…';
-    }
-}
-
-// ============================================================
-//  CRYPTO ANALYSIS
-// ============================================================
-async function analyzeCrypto() {
-    if (isProcessing) return;
-    if (!currentUser) {
-        console.error('❌ No user logged in');
-        return;
-    }
-    
-    const asset = document.getElementById('assetSelect').value;
-    const timeframe = document.getElementById('timeframeSelect').value;
-    
-    const message = `Analyze ${asset} using ${timeframe} timeframe and provide a detailed BUY/SELL/HOLD recommendation with technical analysis.`;
-    
-    document.getElementById('msgInput').value = message;
-    await sendMessage();
 }
 
 // ============================================================
@@ -205,9 +164,8 @@ async function enterApp(displayName) {
     msgDiv.innerHTML = '';
     
     const userData = USERS[currentUser];
-    const welcomeMsg = userData?.welcome || `Welcome, ${displayName}! 🌸 I'm Baby Hawk - Crypto Queen. Ready to analyze the markets for you! 📊`;
+    const welcomeMsg = userData?.welcome || `Welcome, ${displayName}! 🌸 I'm Baby Hawk - Crypto Queen. Ready to trade and love. 💎`;
     addMessage(welcomeMsg, 'bot');
-    setMode('chat');
 }
 
 function logoutUser() {
@@ -275,9 +233,6 @@ async function sendMessage() {
     showTyping();
 
     try {
-        const isCryptoMode = currentMode === 'crypto';
-        const asset = document.getElementById('assetSelect')?.value || 'BTC-USD';
-        
         const res = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -285,8 +240,7 @@ async function sendMessage() {
                 userId: currentUser,
                 message: message,
                 model: 'gemini-2.5-flash',
-                includeMarketData: isCryptoMode,
-                asset: asset
+                asset: 'BTC-USD'
             })
         });
 
@@ -441,5 +395,3 @@ document.addEventListener('DOMContentLoaded', function() {
 window.loginUser = loginUser;
 window.logoutUser = logoutUser;
 window.sendMessage = sendMessage;
-window.setMode = setMode;
-window.analyzeCrypto = analyzeCrypto;
