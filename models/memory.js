@@ -55,12 +55,6 @@ MemorySchema.statics.getOrCreate = async function(userId) {
 };
 
 MemorySchema.methods.addMessage = async function(sender, text) {
-  const lastMessage = this.messages[this.messages.length - 1];
-  if (lastMessage && lastMessage.text === text && lastMessage.sender === sender) {
-    console.log('⚠️ Duplicate message detected, skipping...');
-    return this;
-  }
-  
   const time = new Date().toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit'

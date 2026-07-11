@@ -2,7 +2,7 @@
   "name": "baby-hawk-crypto-queen",
   "version": "1.0.0",
   "private": true,
-  "description": "🕉️ Baby Hawk - Crypto Queen",
+  "description": "🕉️ Baby Hawk - Crypto Queen with Gemini 3.5 Flash",
   "scripts": {
     "start": "node api/index.js"
   },
