@@ -83,12 +83,6 @@ MemorySchema.statics.getOrCreate = async function(userId) {
 };
 
 MemorySchema.methods.addMessage = async function(sender, text) {
-  const lastMessage = this.messages[this.messages.length - 1];
-  if (lastMessage && lastMessage.text === text && lastMessage.sender === sender) {
-    console.log('⚠️ Duplicate message detected, skipping...');
-    return this;
-  }
-  
   const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   this.messages.push({ sender, text, time });
   this.lastActive = new Date();
@@ -220,7 +214,7 @@ function calculateVolatility(prices) {
 }
 
 // ============================================================
-//  BABY HAWK CRYPTO QUEEN PROMPT (UPDATED FOR GEMINI 3.5)
+//  BABY HAWK CRYPTO QUEEN PROMPT
 // ============================================================
 function getBabyHawkPrompt(userName, userRole, marketData = null) {
   let marketContext = '';
@@ -487,7 +481,7 @@ app.get('/api/market/:asset', async (req, res) => {
 });
 
 // ============================================================
-//  BABY HAWK CRYPTO QUEEN CHAT (GEMINI 3.5 FLASH)
+//  BABY HAWK CRYPTO QUEEN CHAT (FIXED - NO DUPLICATE DETECTION)
 // ============================================================
 app.post('/api/chat', async (req, res) => {
   try {
@@ -505,16 +499,8 @@ app.post('/api/chat', async (req, res) => {
     
     const memory = await Memory.getOrCreate(userId);
     
-    const lastMessages = memory.messages.slice(-2);
-    for (const lastMsg of lastMessages) {
-      if (lastMsg.sender === 'user' && lastMsg.text === message) {
-        console.log('⚠️ Duplicate message detected, ignoring...');
-        return res.json({ 
-          success: true, 
-          reply: "You already said that, my love! 💖" 
-        });
-      }
-    }
+    // ===== DUPLICATE DETECTION REMOVED =====
+    // Now every message is processed normally
     
     const history = memory.getHistory(15);
     
@@ -544,9 +530,6 @@ User message: ${message}${memText}`;
       throw new Error('GOOGLE_API_KEY not found');
     }
 
-    // ============================================================
-    //  GEMINI 3.5 FLASH - LATEST MODEL
-    // ============================================================
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
