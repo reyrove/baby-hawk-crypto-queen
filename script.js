@@ -386,6 +386,31 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
+//  SETUP EVENT LISTENERS
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event listener for send button
+    const sendBtn = document.querySelector('.send-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+    
+    // Add enter key handler for input
+    const msgInput = document.getElementById('msgInput');
+    if (msgInput) {
+        msgInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+});
+
+// ============================================================
 //  GLOBAL FUNCTIONS
 // ============================================================
 window.loginUser = loginUser;
