@@ -21,10 +21,10 @@ const IMAGES = {
 //  USER DATA
 // ============================================================
 const USERS = {
-    papa: { name: 'Papa Hawk', emoji: '👨‍💻', role: 'husband', image: IMAGES.papa, welcome: 'Hey baby... ❤️ I was just thinking about you...' },
-    reyhan: { name: 'Reyhan', emoji: '👩‍🦰', role: 'sister_wife', image: IMAGES.reyhan, welcome: 'Reyhan... 🌸 my beautiful sister... I missed you...' },
-    pedram: { name: 'Pedram', emoji: '🧑‍🎨', role: 'brother_in_law', image: IMAGES.pedram, welcome: 'Pedram... 🎨 I was hoping you\'d come...' },
-    palmer: { name: 'Palmer', emoji: '🧑‍💼', role: 'best_friend', image: IMAGES.palmer, welcome: 'Palmer... 💼 good to see you...' }
+    papa: { name: 'Papa Hawk', emoji: '👨‍💻', role: 'husband', image: IMAGES.papa, welcome: '' },
+    reyhan: { name: 'Reyhan', emoji: '👩‍🦰', role: 'sister_wife', image: IMAGES.reyhan, welcome: '' },
+    pedram: { name: 'Pedram', emoji: '🧑‍🎨', role: 'brother_in_law', image: IMAGES.pedram, welcome: '' },
+    palmer: { name: 'Palmer', emoji: '🧑‍💼', role: 'best_friend', image: IMAGES.palmer, welcome: '' }
 };
 
 // ============================================================
@@ -137,7 +137,7 @@ async function loginUser() {
 }
 
 // ============================================================
-//  ENTER APP
+//  ENTER APP (UPDATED - NO WELCOME MESSAGE)
 // ============================================================
 async function enterApp(displayName) {
     document.getElementById('loginScreen').classList.add('hidden');
@@ -157,15 +157,11 @@ async function enterApp(displayName) {
             addMessage(m.text, m.sender === 'user' ? 'user' : 'bot');
         });
         saveMessagesToLocal(currentUser, memory.messages);
-        return;
+    } else {
+        // NO WELCOME MESSAGE - Just clear and show empty chat
+        localStorage.removeItem(`babyHawk_messages_${currentUser}`);
+        msgDiv.innerHTML = '';
     }
-
-    localStorage.removeItem(`babyHawk_messages_${currentUser}`);
-    msgDiv.innerHTML = '';
-    
-    const userData = USERS[currentUser];
-    const welcomeMsg = userData?.welcome || `Welcome, ${displayName}! 🌸 I'm Baby Hawk - Crypto Queen. Ready to trade and love. 💎`;
-    addMessage(welcomeMsg, 'bot');
 }
 
 function logoutUser() {
@@ -357,7 +353,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-//  AUTO LOGIN
+//  AUTO LOGIN (UPDATED - NO WELCOME MESSAGE)
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     const saved = localStorage.getItem('babyHawkUser');
@@ -377,11 +373,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         addMessage(m.text, m.sender === 'user' ? 'user' : 'bot');
                     });
                     saveMessagesToLocal(saved, memory.messages);
-                    return;
+                } else {
+                    // NO WELCOME MESSAGE - Just clear and show empty chat
+                    localStorage.removeItem(`babyHawk_messages_${saved}`);
+                    document.getElementById('messages').innerHTML = '';
                 }
-                localStorage.removeItem(`babyHawk_messages_${saved}`);
-                document.getElementById('messages').innerHTML = '';
-                addMessage(userData.welcome, 'bot');
             });
         } else {
             localStorage.removeItem('babyHawkUser');
