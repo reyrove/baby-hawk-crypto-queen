@@ -592,7 +592,7 @@ app.get('/api/market/:asset', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     await connectDB();
-    const { userId, message, model = process.env.GEMINI_MODEL || 'gemini-3.5-flash', asset = 'BTC-USD' } = req.body;
+    const { userId, message, model = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp', asset = 'BTC-USD' } = req.body;
     
     if (!userId || !message) {
       return res.status(400).json({ error: 'userId and message required' });
