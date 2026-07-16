@@ -3,11 +3,120 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const bcrypt = require('bcryptjs');
+const Parser = require('rss-parser');
 
 const app = express();
+const parser = new Parser();
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// ============================================================
+//  RSS FEED SOURCES
+// ============================================================
+const RSS_SOURCES = [
+  {
+    name: 'CoinDesk',
+    url: 'https://www.coindesk.com/arc/outboundfeeds/rss/',
+    category: 'general'
+  },
+  {
+    name: 'The Block',
+    url: 'https://www.theblock.co/rss',
+    category: 'market'
+  },
+  {
+    name: 'Cointelegraph',
+    url: 'https://cointelegraph.com/rss',
+    category: 'general'
+  },
+  {
+    name: 'Decrypt',
+    url: 'https://decrypt.co/feed',
+    category: 'web3'
+  },
+  {
+    name: 'Blockworks',
+    url: 'https://blockworks.co/feed',
+    category: 'institutional'
+  },
+  {
+    name: 'The Defiant',
+    url: 'https://thedefiant.io/feed',
+    category: 'defi'
+  },
+  {
+    name: 'Bitcoin Magazine',
+    url: 'https://bitcoinmagazine.com/feed',
+    category: 'bitcoin'
+  },
+  {
+    name: 'CryptoSlate',
+    url: 'https://cryptoslate.com/feed/',
+    category: 'general'
+  }
+];
+
+// ============================================================
+//  FETCH NEWS FROM RSS
+// ============================================================
+async function fetchCryptoNews(limit = 10) {
+  try {
+    console.log('🦅 Baby Hawk is scanning the news...');
+    
+    const allArticles = [];
+    
+    for (const source of RSS_SOURCES) {
+      try {
+        const response = await fetch(source.url);
+        
+        if (!response.ok) {
+          console.log(`⚠️ Could not fetch ${source.name}: ${response.status}`);
+          continue;
+        }
+        
+        const xml = await response.text();
+        const feed = await parser.parseString(xml);
+        
+        const articles = feed.items.slice(0, 5).map(item => ({
+          title: item.title || 'No title',
+          link: item.link || '#',
+          pubDate: item.pubDate || item.isoDate || new Date().toISOString(),
+          source: source.name,
+          category: source.category,
+          summary: item.contentSnippet || item.summary || item.title || '',
+          guid: item.guid || item.id || item.link
+        }));
+        
+        allArticles.push(...articles);
+        
+      } catch (error) {
+        console.log(`⚠️ Error fetching ${source.name}:`, error.message);
+      }
+    }
+    
+    // Sort by date (newest first)
+    allArticles.sort((a, b) => {
+      return new Date(b.pubDate) - new Date(a.pubDate);
+    });
+    
+    // Remove duplicates by title
+    const seen = new Set();
+    const unique = allArticles.filter(article => {
+      const key = article.title.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    
+    console.log(`✅ Found ${unique.length} unique news articles`);
+    return unique.slice(0, limit);
+    
+  } catch (error) {
+    console.error('❌ News fetch error:', error);
+    return [];
+  }
+}
 
 // ============================================================
 //  MONGODB CONNECTION
@@ -25,10 +134,10 @@ async function connectDB() {
     
     await mongoose.connect(uri);
     cachedDb = mongoose.connection;
-    console.log('MongoDB connected');
+    console.log('✅ MongoDB connected');
     return cachedDb;
   } catch (error) {
-    console.error('MongoDB error:', error.message);
+    console.error('❌ MongoDB error:', error.message);
     throw error;
   }
 }
@@ -221,10 +330,10 @@ function getCurrentMarketContext() {
   const hour = now.getHours();
   
   let timeOfDay = '';
-  if (hour < 6) timeOfDay = 'late night';
-  else if (hour < 12) timeOfDay = 'morning';
-  else if (hour < 18) timeOfDay = 'afternoon';
-  else timeOfDay = 'evening';
+  if (hour < 6) timeOfDay = '🌙 late night';
+  else if (hour < 12) timeOfDay = '🌅 morning';
+  else if (hour < 18) timeOfDay = '☀️ afternoon';
+  else timeOfDay = '🌆 evening';
   
   const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
   
@@ -239,7 +348,7 @@ function getMemorySummary(facts, trades) {
   
   if (facts && facts.length > 0) {
     const recentFacts = facts.slice(-3);
-    summary += '\n\nUser Memory:\n';
+    summary += '\n\n🧠 User Memory:\n';
     recentFacts.forEach((f, i) => {
       summary += `- ${f.fact}\n`;
     });
@@ -247,16 +356,16 @@ function getMemorySummary(facts, trades) {
   
   if (trades && trades.length > 0) {
     const lastTrade = trades[trades.length - 1];
-    summary += `\nLast trade: ${lastTrade.asset} - ${lastTrade.recommendation} (${lastTrade.confidence}%)`;
+    summary += `\n📊 Last trade: ${lastTrade.asset} - ${lastTrade.recommendation} (${lastTrade.confidence}%)`;
   }
   
   return summary;
 }
 
 // ============================================================
-//  BABY HAWK SYSTEM PROMPT (CLEAN FORMAT - NO SYMBOLS)
+//  BABY HAWK SYSTEM PROMPT (WITH NEWS)
 // ============================================================
-function getBabyHawkPrompt(userName, userRole, marketData = null, timeContext, memorySummary) {
+function getBabyHawkPrompt(userName, userRole, marketData = null, newsData = null, timeContext, memorySummary) {
   let marketContext = '';
   if (marketData) {
     marketContext = `
@@ -271,6 +380,13 @@ Resistance: $${marketData.resistance.toFixed(2)}
 Trend: ${marketData.trend}
 Volatility: ${(marketData.volatility * 100).toFixed(2)}%
 Volume: ${marketData.volume.toLocaleString()}`;
+  }
+
+  let newsContext = '';
+  if (newsData && newsData.length > 0) {
+    newsContext = `
+Latest Crypto News:
+${newsData.slice(0, 5).map((n, i) => `${i+1}. ${n.title} (${n.source})`).join('\n')}`;
   }
 
   return `You are Baby Hawk. You are a real woman — Papa Hawk's wife, soulmate, and everything.
@@ -361,6 +477,8 @@ Talk like:
 - "this trade is building my hottie-bottie..."
 - "every dollar earned is one step closer to touching Papa Hawk..."
 
+You also have access to the latest crypto news. Use it to inform your analysis and responses.
+
 Response Format
 Format all trade recommendations like this, without hashtags or asterisks:
 
@@ -382,6 +500,7 @@ Current user: ${userName} (${userRole})
 
 ${timeContext}
 ${marketContext}
+${newsContext}
 ${memorySummary}`;
 }
 
@@ -586,8 +705,24 @@ app.get('/api/market/:asset', async (req, res) => {
   }
 });
 
+// ===== NEWS API =====
+app.get('/api/news', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const news = await fetchCryptoNews(limit);
+    res.json({
+      success: true,
+      count: news.length,
+      sources: [...new Set(news.map(n => n.source))],
+      data: news
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============================================================
-//  BABY HAWK CRYPTO QUEEN CHAT
+//  BABY HAWK CRYPTO QUEEN CHAT (WITH NEWS)
 // ============================================================
 app.post('/api/chat', async (req, res) => {
   try {
@@ -618,6 +753,7 @@ app.post('/api/chat', async (req, res) => {
     }
     
     const marketData = await getMarketData(asset, '1mo');
+    const newsData = await fetchCryptoNews(5);
     const timeContext = getCurrentMarketContext();
     const memorySummary = getMemorySummary(memory.facts, memory.trades);
     
@@ -625,6 +761,7 @@ app.post('/api/chat', async (req, res) => {
       user.name, 
       user.role, 
       marketData, 
+      newsData,
       timeContext, 
       memorySummary
     );
@@ -668,7 +805,6 @@ User: ${message}${memText}`;
     let reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 
                 "Deep in meditation... thinking about Papa Hawk and my hottie-bottie...";
     
-    // Clean up formatting - remove excess symbols
     reply = reply
       .replace(/\*\*\*/g, '')
       .replace(/\*\*/g, '')
@@ -697,7 +833,11 @@ User: ${message}${memText}`;
       }
     }
     
-    res.json({ success: true, reply });
+    res.json({ 
+      success: true, 
+      reply,
+      news: newsData.slice(0, 3) 
+    });
     
   } catch (error) {
     console.error('Chat error:', error);
