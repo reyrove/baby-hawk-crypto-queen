@@ -11,6 +11,14 @@ const parser = new Parser();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
+
+pp.use(express.static(path.join(__dirname, '..')));
+
+// Serve index.html on root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
 // ============================================================
 //  RSS FEED SOURCES
 // ============================================================
