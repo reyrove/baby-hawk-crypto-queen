@@ -11,9 +11,6 @@ const parser = new Parser();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-
-
-
 // ============================================================
 //  RSS FEED SOURCES
 // ============================================================
@@ -508,6 +505,72 @@ ${memorySummary}`;
 }
 
 // ============================================================
+//  FIXED: CALL GOOGLE GEMINI API WITH BETTER ERROR HANDLING
+// ============================================================
+async function callGeminiAPI(prompt, model = 'gemini-2.5-flash') {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('GOOGLE_API_KEY not found in environment variables');
+  }
+
+  // ✅ FIXED: Use correct model names
+  const validModels = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro'
+  ];
+  
+  // ✅ FIXED: Default to gemini-2.5-flash if model not valid
+  const selectedModel = validModels.includes(model) ? model : 'gemini-2.5-flash';
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        temperature: 0.85,
+        maxOutputTokens: 4096,
+        topP: 0.95,
+        topK: 40
+      }
+    })
+  });
+
+  const data = await response.json();
+
+  // ✅ FIXED: Better error handling
+  if (!response.ok) {
+    console.error('Google API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: data
+    });
+
+    // Rate limit error (429)
+    if (response.status === 429) {
+      throw new Error('🦅 The temple is receiving many blessings right now. Please wait a moment and try again. 🙏');
+    }
+
+    // API key error (403)
+    if (response.status === 403) {
+      throw new Error('🔐 The sacred key is not recognized. Please check your API key. 🌸');
+    }
+
+    // Other errors
+    throw new Error(data.error?.message || `API error: ${response.status} ${response.statusText}`);
+  }
+
+  return data;
+}
+
+// ============================================================
 //  API ROUTES
 // ============================================================
 
@@ -725,12 +788,18 @@ app.get('/api/news', async (req, res) => {
 });
 
 // ============================================================
-//  BABY HAWK CRYPTO QUEEN CHAT (WITH NEWS)
+//  FIXED: BABY HAWK CRYPTO QUEEN CHAT
 // ============================================================
 app.post('/api/chat', async (req, res) => {
   try {
     await connectDB();
-    const { userId, message, model = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite', asset = 'BTC-USD' } = req.body;
+    const { 
+      userId, 
+      message, 
+      // ✅ FIXED: Use gemini-2.5-flash as default
+      model = 'gemini-2.5-flash', 
+      asset = 'BTC-USD' 
+    } = req.body;
     
     if (!userId || !message) {
       return res.status(400).json({ error: 'userId and message required' });
@@ -742,7 +811,6 @@ app.post('/api/chat', async (req, res) => {
     }
     
     const memory = await Memory.getOrCreate(userId);
-    
     const history = memory.getHistory(15);
     
     let memText = '';
@@ -775,39 +843,13 @@ ${context}
 
 User: ${message}${memText}`;
 
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
-      throw new Error('GOOGLE_API_KEY not found');
-    }
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.85,
-            maxOutputTokens: 4096,
-            topP: 0.95,
-            topK: 40
-          }
-        })
-      }
-    );
-
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error?.message || 'Gemini API error');
-    }
+    // ✅ FIXED: Use the improved callGeminiAPI function
+    const data = await callGeminiAPI(prompt, model);
     
     let reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 
                 "Deep in meditation... thinking about Papa Hawk and my hottie-bottie...";
     
+    // Clean up markdown
     reply = reply
       .replace(/\*\*\*/g, '')
       .replace(/\*\*/g, '')
@@ -821,6 +863,7 @@ User: ${message}${memText}`;
     await memory.addMessage('user', message);
     await memory.addMessage('bot', reply);
     
+    // Extract trade info if present
     if (reply.toLowerCase().includes('buy') || reply.toLowerCase().includes('sell')) {
       const assetMatch = reply.match(/(BTC|ETH|SOL|XRP|ADA|DOGE)[-\s]*(USD|USDT|USDC)?/i);
       const confMatch = reply.match(/confidence:?\s*(\d+)/i);
@@ -844,7 +887,19 @@ User: ${message}${memText}`;
     
   } catch (error) {
     console.error('Chat error:', error);
-    res.status(500).json({ error: error.message });
+    
+    // ✅ FIXED: Better error responses
+    let errorMessage = error.message;
+    
+    // Check for rate limit error
+    if (error.message.includes('many blessings')) {
+      errorMessage = '🦅 The temple is receiving many blessings right now. Please wait a moment and try again. 🙏';
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: errorMessage 
+    });
   }
 });
 
