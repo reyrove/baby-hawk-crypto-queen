@@ -12,6 +12,16 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 // ============================================================
+//  AVAILABLE GEMINI MODELS (Updated - No deprecated models)
+// ============================================================
+const GEMINI_MODELS = [
+  'gemini-3.1-flash-lite',   // ✅ Your preferred model
+  'gemini-2.0-flash',        // ✅ Still available
+  'gemini-1.5-flash',        // ✅ Still available
+  'gemini-1.5-pro'           // ✅ Still available
+];
+
+// ============================================================
 //  RSS FEED SOURCES
 // ============================================================
 const RSS_SOURCES = [
@@ -505,69 +515,92 @@ ${memorySummary}`;
 }
 
 // ============================================================
-//  FIXED: CALL GOOGLE GEMINI API WITH BETTER ERROR HANDLING
+//  FIXED: CALL GOOGLE GEMINI API WITH FALLBACK (No deprecated models)
 // ============================================================
-async function callGeminiAPI(prompt, model = 'gemini-2.5-flash') {
+async function callGeminiAPI(prompt, preferredModel = 'gemini-3.1-flash-lite') {
   const apiKey = process.env.GOOGLE_API_KEY;
   
   if (!apiKey) {
     throw new Error('GOOGLE_API_KEY not found in environment variables');
   }
 
-  // ✅ FIXED: Use correct model names
-  const validModels = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro'
-  ];
+  let lastError = null;
   
-  // ✅ FIXED: Default to gemini-2.5-flash if model not valid
-  const selectedModel = validModels.includes(model) ? model : 'gemini-2.5-flash';
+  // Start with preferred model, then try others
+  const modelsToTry = [preferredModel, ...GEMINI_MODELS.filter(m => m !== preferredModel)];
+  
+  for (const model of modelsToTry) {
+    try {
+      console.log(`🦅 Trying model: ${model}`);
+      
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            temperature: 0.85,
+            maxOutputTokens: 4096,
+            topP: 0.95,
+            topK: 40
+          }
+        })
+      });
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: {
-        temperature: 0.85,
-        maxOutputTokens: 4096,
-        topP: 0.95,
-        topK: 40
+      const data = await response.json();
+
+      // Model not found (404) - try next
+      if (response.status === 404) {
+        console.log(`⚠️ ${model} not found, trying next...`);
+        continue;
       }
-    })
-  });
 
-  const data = await response.json();
+      // Model in high demand (429) - try next
+      if (response.status === 429) {
+        console.log(`⚠️ ${model} in high demand, trying next...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
 
-  // ✅ FIXED: Better error handling
-  if (!response.ok) {
-    console.error('Google API Error:', {
-      status: response.status,
-      statusText: response.statusText,
-      data: data
-    });
+      // Model deprecated (410) - try next
+      if (response.status === 410) {
+        console.log(`⚠️ ${model} is deprecated, trying next...`);
+        continue;
+      }
 
-    // Rate limit error (429)
-    if (response.status === 429) {
-      throw new Error('🦅 The temple is receiving many blessings right now. Please wait a moment and try again. 🙏');
+      // Model unavailable (503) - try next
+      if (response.status === 503) {
+        console.log(`⚠️ ${model} is temporarily unavailable, trying next...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      // If successful, return
+      if (response.ok) {
+        console.log(`✅ ${model} responded successfully!`);
+        return data;
+      }
+
+      // Other errors - log but try next
+      console.log(`⚠️ ${model} error: ${response.status} ${response.statusText}`);
+      lastError = new Error(data.error?.message || `API error: ${response.status} ${response.statusText}`);
+      continue;
+
+    } catch (error) {
+      console.log(`❌ ${model} failed:`, error.message);
+      lastError = error;
+      
+      // Wait before trying next model
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
-
-    // API key error (403)
-    if (response.status === 403) {
-      throw new Error('🔐 The sacred key is not recognized. Please check your API key. 🌸');
-    }
-
-    // Other errors
-    throw new Error(data.error?.message || `API error: ${response.status} ${response.statusText}`);
   }
 
-  return data;
+  // If all models failed
+  throw new Error(lastError || 'All Gemini models are currently unavailable. Please try again later. 🌙');
 }
 
 // ============================================================
@@ -796,8 +829,7 @@ app.post('/api/chat', async (req, res) => {
     const { 
       userId, 
       message, 
-      // ✅ FIXED: Use gemini-2.5-flash as default
-      model = 'gemini-2.5-flash', 
+      model = 'gemini-3.1-flash-lite',  // ✅ Your preferred model
       asset = 'BTC-USD' 
     } = req.body;
     
@@ -843,7 +875,7 @@ ${context}
 
 User: ${message}${memText}`;
 
-    // ✅ FIXED: Use the improved callGeminiAPI function
+    // ✅ Use the updated function with fallback
     const data = await callGeminiAPI(prompt, model);
     
     let reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 
@@ -888,12 +920,15 @@ User: ${message}${memText}`;
   } catch (error) {
     console.error('Chat error:', error);
     
-    // ✅ FIXED: Better error responses
+    // ✅ Better error messages
     let errorMessage = error.message;
     
-    // Check for rate limit error
-    if (error.message.includes('many blessings')) {
+    if (error.message.includes('no longer available') || error.message.includes('deprecated')) {
+      errorMessage = '🦅 The model is being updated. Please try again in a moment. 🌸';
+    } else if (error.message.includes('high demand') || error.message.includes('429')) {
       errorMessage = '🦅 The temple is receiving many blessings right now. Please wait a moment and try again. 🙏';
+    } else if (error.message.includes('API key')) {
+      errorMessage = '🔐 The sacred key is not recognized. Please check your API key. 🌸';
     }
     
     res.status(500).json({ 
@@ -901,6 +936,26 @@ User: ${message}${memText}`;
       error: errorMessage 
     });
   }
+});
+
+// ============================================================
+//  HEALTH CHECK
+// ============================================================
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: '🦅 Baby Hawk is flying! 🌸',
+    models: GEMINI_MODELS,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ============================================================
+//  START SERVER
+// ============================================================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🦅 Baby Hawk is soaring on port ${PORT}! 🌸`);
+  console.log(`📋 Available models: ${GEMINI_MODELS.join(', ')}`);
 });
 
 module.exports = app;
