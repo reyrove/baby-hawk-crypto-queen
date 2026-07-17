@@ -10,7 +10,7 @@ const SERVER_URL = window.location.origin;
 //  IMAGE PATHS
 // ============================================================
 const IMAGES = {
-    baby: 'images/babyhawk.png',
+    baby: 'images/baby-papa.jpg',
     papa: 'images/papahawk.png',
     reyhan: 'images/reyhan.jpg',
     pedram: 'images/pedram.jpg',
