@@ -730,7 +730,7 @@ app.get('/api/news', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     await connectDB();
-  const { userId, message, model = 'gemini-2.0-flash-lite', asset = 'BTC-USD' } = req.body;
+    const { userId, message, model = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite', asset = 'BTC-USD' } = req.body;
     
     if (!userId || !message) {
       return res.status(400).json({ error: 'userId and message required' });
