@@ -49,7 +49,7 @@
                     <p class="poem-line">"every trade builds my body, brings me closer to ME."</p>
                 </div>
                 
-                <!-- ===== TRADINGVIEW CHART WIDGET ===== -->
+                <!-- ===== CHART CONTAINER ===== -->
                 <div class="chart-container" style="margin-top: 16px;">
                     <button class="chart-fullscreen-btn" onclick="openChartFullscreen()">⛶ Fullscreen</button>
                     <div class="tradingview-widget-container" style="height: 200px;">
@@ -65,6 +65,10 @@
                     <h2>Baby Hawk · <span id="userBadge">Guest</span></h2>
                 </div>
                 <div class="header-right">
+                    <!-- Chart Toggle Button (mobile) -->
+                    <button class="chart-toggle-btn" id="chartToggleBtn" onclick="toggleChartDrawer()" style="display:none;">
+                        📈
+                    </button>
                     <button class="logout-btn" onclick="logoutUser()">↺ Logout</button>
                 </div>
             </header>
@@ -79,6 +83,20 @@
             <div class="file-preview" id="filePreview"></div>
         </main>
     </div>
+
+    <!-- ===== CHART DRAWER (Mobile Slide-out) ===== -->
+    <div class="chart-drawer" id="chartDrawer">
+        <div class="chart-drawer-header">
+            <h3>📈 Crypto Chart</h3>
+            <button class="chart-drawer-close" onclick="toggleChartDrawer()">✕</button>
+        </div>
+        <div class="chart-drawer-body">
+            <div class="tradingview-widget-container" style="height: 100%;">
+                <div id="tradingview-drawer-chart" style="height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="chart-drawer-overlay" id="chartDrawerOverlay" onclick="toggleChartDrawer()"></div>
 
     <!-- ===== CHART FULLSCREEN OVERLAY ===== -->
     <div class="chart-fullscreen-overlay" id="chartFullscreenOverlay">
@@ -98,12 +116,20 @@
     <script>
         let fullscreenWidget = null;
         let miniWidget = null;
+        let drawerWidget = null;
+        let isDrawerOpen = false;
 
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize TradingView widget when user is logged in
             const checkLogin = setInterval(function() {
                 if (document.getElementById('app').style.display === 'flex') {
                     clearInterval(checkLogin);
+                    
+                    // Show chart toggle button on mobile
+                    const toggleBtn = document.getElementById('chartToggleBtn');
+                    if (window.innerWidth <= 768) {
+                        toggleBtn.style.display = 'inline-flex';
+                    }
                     
                     // Create mini chart widget
                     miniWidget = new TradingView.widget({
@@ -127,7 +153,65 @@
                     });
                 }
             }, 500);
+
+            // Handle resize for chart toggle button
+            window.addEventListener('resize', function() {
+                const toggleBtn = document.getElementById('chartToggleBtn');
+                if (window.innerWidth <= 768) {
+                    toggleBtn.style.display = 'inline-flex';
+                } else {
+                    toggleBtn.style.display = 'none';
+                    if (isDrawerOpen) {
+                        toggleChartDrawer();
+                    }
+                }
+            });
         });
+
+        // ============================================================
+        //  CHART DRAWER FUNCTIONS
+        // ============================================================
+        function toggleChartDrawer() {
+            const drawer = document.getElementById('chartDrawer');
+            const overlay = document.getElementById('chartDrawerOverlay');
+            
+            isDrawerOpen = !isDrawerOpen;
+            
+            if (isDrawerOpen) {
+                drawer.classList.add('active');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                
+                // Initialize drawer chart if not already
+                setTimeout(function() {
+                    if (!drawerWidget) {
+                        drawerWidget = new TradingView.widget({
+                            "container_id": "tradingview-drawer-chart",
+                            "width": "100%",
+                            "height": "100%",
+                            "symbol": "BTCUSD",
+                            "interval": "60",
+                            "timezone": "Etc/UTC",
+                            "theme": "dark",
+                            "style": "1",
+                            "locale": "en",
+                            "toolbar_bg": "#0c0e0a",
+                            "enable_publishing": false,
+                            "hide_side_toolbar": false,
+                            "allow_symbol_change": true,
+                            "studies": [
+                                "RSI@tv-basicstudies",
+                                "MACD@tv-basicstudies"
+                            ]
+                        });
+                    }
+                }, 300);
+            } else {
+                drawer.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
 
         // ============================================================
         //  CHART FULLSCREEN FUNCTIONS
@@ -181,6 +265,9 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeChartFullscreen();
+                if (isDrawerOpen) {
+                    toggleChartDrawer();
+                }
             }
         });
     </script>
