@@ -182,7 +182,7 @@ function logoutUser() {
 }
 
 // ============================================================
-//  SEND MESSAGE
+//  SEND MESSAGE (UPDATED WITH CORRECT MODEL)
 // ============================================================
 async function sendMessage() {
     if (isProcessing) {
@@ -229,13 +229,14 @@ async function sendMessage() {
     showTyping();
 
     try {
+        // ✅ UPDATED: Using gemini-3.1-flash-lite (your working model)
         const res = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 userId: currentUser,
                 message: message,
-                model: 'gemini-3.5-flash',
+                model: 'gemini-3.1-flash-lite',  // ✅ Fixed: Your working model
                 asset: 'BTC-USD'
             })
         });
@@ -247,7 +248,9 @@ async function sendMessage() {
             await saveMessageToServer(currentUser, 'bot', data.reply);
             addMessage(data.reply, 'bot');
         } else {
-            addMessage(`❌ Error: ${data.error || 'Something went wrong'}`, 'bot');
+            // ✅ Better error display
+            const errorMsg = data.error || 'Something went wrong';
+            addMessage(`❌ ${errorMsg}`, 'bot');
         }
 
     } catch (e) {
