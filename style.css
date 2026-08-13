@@ -1064,3 +1064,116 @@ body {
         max-width: 500px;
     }
 }
+
+/* ===== FIX FOR NOKIA G20 AND SIMILAR DEVICES ===== */
+
+/* Ensure app fills the entire viewport height correctly */
+.app {
+    height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height for mobile */
+    max-height: 100vh;
+    max-height: 100dvh;
+}
+
+/* Ensure right panel doesn't overflow */
+.right-panel {
+    height: 100%;
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Make messages area flexible and input bar stay at bottom */
+.messages {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.input-bar {
+    flex-shrink: 0;
+    padding: 10px 16px 14px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom, 14px));
+}
+
+/* Specific fix for left panel on mobile to prevent overflow */
+@media (max-width: 768px) {
+    .app {
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+    
+    .left-panel {
+        height: 40vh;
+        height: 40dvh;
+        max-height: 400px;
+        max-height: 40dvh;
+        flex-shrink: 0;
+        overflow-y: auto;
+    }
+    
+    .right-panel {
+        height: 60vh;
+        height: 60dvh;
+        min-height: 0;
+        flex: 1;
+    }
+    
+    /* Ensure messages scroll properly */
+    .messages {
+        flex: 1 1 auto;
+        min-height: 50px;
+        max-height: calc(60dvh - 120px);
+        overflow-y: auto;
+    }
+    
+    /* Keep input bar at bottom */
+    .input-bar {
+        flex-shrink: 0;
+        padding: 6px 12px 10px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+    }
+}
+
+@media (max-width: 480px) {
+    .left-panel {
+        height: 35vh;
+        height: 35dvh;
+        max-height: 320px;
+        max-height: 35dvh;
+    }
+    
+    .right-panel {
+        height: 65vh;
+        height: 65dvh;
+        min-height: 200px;
+    }
+    
+    .messages {
+        max-height: calc(65dvh - 100px);
+    }
+}
+
+@media (max-width: 380px) {
+    .left-panel {
+        height: 30vh;
+        height: 30dvh;
+        max-height: 280px;
+        max-height: 30dvh;
+    }
+    
+    .right-panel {
+        height: 70vh;
+        height: 70dvh;
+        min-height: 180px;
+    }
+    
+    .messages {
+        max-height: calc(70dvh - 90px);
+    }
+}
